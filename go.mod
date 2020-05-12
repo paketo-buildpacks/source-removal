@@ -1,8 +1,9 @@
-module github.com/ForestEckhardt/no-source-cnb
+module github.com/ForestEckhardt/clear-source
 
 go 1.13
 
 require (
+	github.com/ForestEckhardt/no-source-cnb v0.0.0-20200206233150-c1981497e600
 	github.com/cloudfoundry/dagger v0.0.0-20200114192520-43fb0b3ec98f
 	github.com/cloudfoundry/node-engine-cnb v0.0.150 // indirect
 	github.com/cloudfoundry/occam v0.0.0-20200129203351-7929b00e4ffd

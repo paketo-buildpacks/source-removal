@@ -1,10 +1,32 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eu
+set -o pipefail
 
-cd "$( dirname "${BASH_SOURCE[0]}" )/.."
+readonly PROGDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly BUILDPACKDIR="$(cd "${PROGDIR}/.." && pwd)"
 
-target_os=${1:-linux}
+function main() {
+  mkdir -p "${BUILDPACKDIR}/bin"
 
-for b in $(ls cmd); do
-    GOOS="$target_os" go build -mod=vendor -ldflags="-s -w" -o "bin/$b" "cmd/$b/main.go"
-done
+  pushd "${BUILDPACKDIR}/bin" > /dev/null || return
+    printf "%s" "Building run..."
+
+    GOOS=linux \
+      go build \
+        -ldflags="-s -w" \
+        -o "run" \
+          "${BUILDPACKDIR}"
+
+    echo "Success!"
+
+    for name in detect build; do
+      printf "%s" "Linking ${name}..."
+
+      ln -sf "run" "${name}"
+
+      echo "Success!"
+    done
+  popd > /dev/null || return
+}
+
+main "${@:-}"
