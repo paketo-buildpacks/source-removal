@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudfoundry/occam"
+	"github.com/paketo-buildpacks/occam"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -47,7 +47,7 @@ func testSimpleApp(t *testing.T, context spec.G, it spec.S) {
 		it("builds a working OCI image for a simple app that has an empty working dir", func() {
 			var err error
 			image, _, err = pack.Build.
-				WithBuildpacks(goURI, goModURI, nosourceURI).
+				WithBuildpacks(buildpack).
 				Execute(name, filepath.Join("testdata", "simple_app"))
 			Expect(err).NotTo(HaveOccurred())
 

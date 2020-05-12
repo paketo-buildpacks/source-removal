@@ -3,13 +3,13 @@ module github.com/ForestEckhardt/clear-source
 go 1.13
 
 require (
-	github.com/ForestEckhardt/no-source-cnb v0.0.0-20200206233150-c1981497e600
-	github.com/cloudfoundry/dagger v0.0.0-20200114192520-43fb0b3ec98f
-	github.com/cloudfoundry/node-engine-cnb v0.0.150 // indirect
-	github.com/cloudfoundry/occam v0.0.0-20200129203351-7929b00e4ffd
-	github.com/cloudfoundry/packit v0.0.0-20200204201339-8aeeeb6bc795
-	github.com/onsi/gomega v1.9.0
-	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/cloudfoundry/dagger v0.0.0-20200508143739-d6ce0ec2ac63
+	github.com/cloudfoundry/packit v0.0.7
+	github.com/golang/protobuf v1.4.1 // indirect
+	github.com/onsi/gomega v1.10.0
+	github.com/paketo-buildpacks/occam v0.0.4
 	github.com/sclevine/spec v1.4.0
-	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
+	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f // indirect
+	google.golang.org/appengine v1.6.6 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

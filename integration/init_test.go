@@ -11,27 +11,21 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	bpDir, nosourceURI, goURI, goModURI string
-)
+var buildpack string
 
 func TestIntegration(t *testing.T) {
+	var Expect = NewWithT(t).Expect
 
-	var (
-		Expect = NewWithT(t).Expect
-		err    error
-	)
-
-	bpDir, err = dagger.FindBPRoot()
+	bpDir, err := dagger.FindBPRoot()
 	Expect(err).NotTo(HaveOccurred())
 
-	nosourceURI, err = dagger.PackageBuildpack(bpDir)
+	buildpack, err = dagger.PackageBuildpack(bpDir)
 	Expect(err).ToNot(HaveOccurred())
-	nosourceURI = fmt.Sprintf("%s.tgz", nosourceURI)
+	buildpack = fmt.Sprintf("%s.tgz", buildpack)
 
-	defer dagger.DeleteBuildpack(nosourceURI)
+	defer dagger.DeleteBuildpack(buildpack)
 
 	suite := spec.New("Integration", spec.Parallel(), spec.Report(report.Terminal{}))
 	suite("SimpleApp", testSimpleApp)
-	dagger.SyncParallelOutput(func() { suite.Run(t) })
+	suite.Run(t)
 }

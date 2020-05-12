@@ -21,19 +21,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		detect = main.Detect()
 	})
 
-	it("returns a plan that provides and requires node", func() {
-		result, err := detect(packit.DetectContext{
-			WorkingDir: "/working-dir",
-		})
+	it("passes detection", func() {
+		result, err := detect(packit.DetectContext{})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(result.Plan).To(Equal(packit.BuildPlan{
-			Provides: []packit.BuildPlanProvision{
-				{Name: "no-source"},
-			},
-			Requires: []packit.BuildPlanRequirement{
-				{Name: "no-source"},
-			},
-		}))
+		Expect(result.Plan).To(Equal(packit.BuildPlan{}))
 	})
 
 }
