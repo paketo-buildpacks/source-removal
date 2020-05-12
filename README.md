@@ -1,4 +1,4 @@
-# Entrypoint Cloud Native Buildpack
+# Clear Source Cloud Native Buildpack
 
 This buildpack is meant to be used at the end of the buildpack order definition and will delete everything in the application directory.
 
