@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	main "github.com/ForestEckhardt/clear-source"
-	"github.com/cloudfoundry/packit"
+	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/cloudfoundry/packit"
+import "github.com/paketo-buildpacks/packit"
 
 func Detect() packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
