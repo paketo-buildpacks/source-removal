@@ -48,7 +48,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	it("returns a result that installs node", func() {
+	it("returns a result that deletes the contents of the working directroy", func() {
 		result, err := build(packit.BuildContext{
 			CNBPath:    cnbDir,
 			Stack:      "some-stack",
@@ -73,7 +73,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(os.Chmod(workingDir, os.ModePerm)).To(Succeed())
 			})
 
-			it("returns a result that installs node", func() {
+			it("returns an error", func() {
 				_, err := build(packit.BuildContext{
 					CNBPath:    cnbDir,
 					Stack:      "some-stack",
