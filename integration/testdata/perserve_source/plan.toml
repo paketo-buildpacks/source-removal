@@ -1,0 +1,5 @@
+[[requires]]
+name = "source-removal"
+
+  [requires.metadata]
+  keep = ["some-file"]

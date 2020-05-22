@@ -11,7 +11,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var buildpack string
+var (
+	buildpack          string
+	buildPlanBuildpack string
+)
 
 func TestIntegration(t *testing.T) {
 	var Expect = NewWithT(t).Expect
@@ -23,9 +26,15 @@ func TestIntegration(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	buildpack = fmt.Sprintf("%s.tgz", buildpack)
 
-	defer dagger.DeleteBuildpack(buildpack)
+	buildPlanBuildpack, err = dagger.GetLatestCommunityBuildpack("ForestEckhardt", "build-plan")
+	Expect(err).NotTo(HaveOccurred())
+
+	defer func() {
+		dagger.DeleteBuildpack(buildpack)
+		dagger.DeleteBuildpack(buildPlanBuildpack)
+	}()
 
 	suite := spec.New("Integration", spec.Parallel(), spec.Report(report.Terminal{}))
-	suite("SimpleApp", testSimpleApp)
+	suite("Default", testDefault)
 	suite.Run(t)
 }

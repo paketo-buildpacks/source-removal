@@ -3,7 +3,7 @@ package main_test
 import (
 	"testing"
 
-	main "github.com/ForestEckhardt/clear-source"
+	main "github.com/ForestEckhardt/source-removal"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
@@ -24,7 +24,11 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	it("passes detection", func() {
 		result, err := detect(packit.DetectContext{})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(result.Plan).To(Equal(packit.BuildPlan{}))
+		Expect(result.Plan).To(Equal(packit.BuildPlan{
+			Provides: []packit.BuildPlanProvision{
+				{Name: "source-removal"},
+			},
+		}))
 	})
 
 }

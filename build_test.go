@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	main "github.com/ForestEckhardt/clear-source"
+	main "github.com/ForestEckhardt/source-removal"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
@@ -36,8 +36,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
-		Expect(os.MkdirAll(filepath.Join(workingDir, "some-dir"), os.ModePerm)).To(Succeed())
+		Expect(os.MkdirAll(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir"), os.ModePerm)).To(Succeed())
 		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
 
 		build = main.Build()
 	})
@@ -48,25 +50,105 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	it("returns a result that deletes the contents of the working directroy", func() {
-		result, err := build(packit.BuildContext{
-			CNBPath:    cnbDir,
-			Stack:      "some-stack",
-			WorkingDir: workingDir,
-			Plan:       packit.BuildpackPlan{},
-			Layers:     packit.Layers{Path: layersDir},
-		})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(result).To(Equal(packit.BuildResult{}))
+	context("when there are no files to keep", func() {
+		it("returns a result that deletes the contents of the working directroy", func() {
+			result, err := build(packit.BuildContext{
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				WorkingDir: workingDir,
+				Plan:       packit.BuildpackPlan{},
+				Layers:     packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal(packit.BuildResult{}))
 
-		Expect(filepath.Join(workingDir, "some-file")).ToNot(BeAnExistingFile())
-		Expect(filepath.Join(workingDir, "some-dir")).ToNot(BeADirectory())
+			Expect(workingDir).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-file")).ToNot(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir")).ToNot(BeADirectory())
+		})
+	})
+
+	context("when there are files to keep", func() {
+		it("returns a result that deletes the contents of the working directroy except for the file that are meant to kept", func() {
+			result, err := build(packit.BuildContext{
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				WorkingDir: workingDir,
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{
+						{
+							Name: "source-removal",
+							Metadata: map[string]interface{}{
+								"keep": []interface{}{
+									"some-dir/some-other-dir/*",
+									"some-file",
+								},
+							},
+						},
+					},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal(packit.BuildResult{}))
+
+			Expect(workingDir).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir")).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-dir", "some-file")).NotTo(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file")).To(BeAnExistingFile())
+		})
 	})
 
 	context("failure cases", func() {
-		context("the working dir cannot be read", func() {
+		context("when the keep globs given are not []string", func() {
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					WorkingDir: workingDir,
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{
+							{
+								Name: "source-removal",
+								Metadata: map[string]interface{}{
+									"keep": 3,
+								},
+							},
+						},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError("Error: keep field needs to be a list of strings"))
+			})
+		})
+
+		context("when there is a malformed glob in keep", func() {
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					WorkingDir: workingDir,
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{
+							{
+								Name: "source-removal",
+								Metadata: map[string]interface{}{
+									"keep": []interface{}{`\`},
+								},
+							},
+						},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("syntax error in pattern")))
+			})
+		})
+
+		context("when the directory cannot be removed", func() {
 			it.Before(func() {
-				Expect(os.Chmod(workingDir, 0000)).To(Succeed())
+				Expect(os.Chmod(workingDir, 0666)).To(Succeed())
 			})
 
 			it.After(func() {
@@ -74,27 +156,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("returns an error", func() {
-				_, err := build(packit.BuildContext{
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					WorkingDir: workingDir,
-					Plan:       packit.BuildpackPlan{},
-					Layers:     packit.Layers{Path: layersDir},
-				})
-				Expect(err).To(MatchError(ContainSubstring("permission denied")))
-			})
-		})
-
-		context("the subdir cannot be read", func() {
-			it.Before(func() {
-				Expect(os.Chmod(filepath.Join(workingDir, "some-dir"), 0000)).To(Succeed())
-			})
-
-			it.After(func() {
-				Expect(os.Chmod(filepath.Join(workingDir, "some-dir"), os.ModePerm)).To(Succeed())
-			})
-
-			it("returns a result that installs node", func() {
 				_, err := build(packit.BuildContext{
 					CNBPath:    cnbDir,
 					Stack:      "some-stack",

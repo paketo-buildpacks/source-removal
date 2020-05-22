@@ -1,8 +1,9 @@
-module github.com/ForestEckhardt/clear-source
+module github.com/ForestEckhardt/source-removal
 
 go 1.13
 
 require (
+	github.com/ForestEckhardt/clear-source v0.0.3
 	github.com/cloudfoundry/dagger v0.0.0-20200508143739-d6ce0ec2ac63
 	github.com/golang/protobuf v1.4.1 // indirect
 	github.com/onsi/gomega v1.10.0

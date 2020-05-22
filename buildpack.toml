@@ -1,8 +1,8 @@
 api = "0.2"
 
 [buildpack]
-id = "ForestEckhardt/clear-source"
-name = "Clear Source Buildpack"
+id = "ForestEckhardt/source-removal"
+name = "Source Removal Buildpack"
 version = "{{ .Version }}"
 
 [metadata]
