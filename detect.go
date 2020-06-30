@@ -1,4 +1,4 @@
-package main
+package sourceremoval
 
 import "github.com/paketo-buildpacks/packit"
 

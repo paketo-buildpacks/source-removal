@@ -1,4 +1,4 @@
-package main_test
+package sourceremoval_test
 
 import (
 	"io/ioutil"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	main "github.com/ForestEckhardt/source-removal"
+	sourceremoval "github.com/ForestEckhardt/source-removal"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
@@ -41,7 +41,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
 		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
 
-		build = main.Build()
+		build = sourceremoval.Build()
 	})
 
 	it.After(func() {

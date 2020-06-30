@@ -1,9 +1,9 @@
-package main_test
+package sourceremoval_test
 
 import (
 	"testing"
 
-	main "github.com/ForestEckhardt/source-removal"
+	sourceremoval "github.com/ForestEckhardt/source-removal"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
@@ -18,7 +18,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		detect = main.Detect()
+		detect = sourceremoval.Detect()
 	})
 
 	it("passes detection", func() {

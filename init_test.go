@@ -1,4 +1,4 @@
-package main_test
+package sourceremoval_test
 
 import (
 	"testing"
