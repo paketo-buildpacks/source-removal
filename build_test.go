@@ -98,69 +98,47 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("failure cases", func() {
-		// context("when the keep globs given are not []string", func() {
-		// 	it("returns an error", func() {
-		// 		_, err := build(packit.BuildContext{
-		// 			CNBPath:    cnbDir,
-		// 			Stack:      "some-stack",
-		// 			WorkingDir: workingDir,
-		// 			Plan: packit.BuildpackPlan{
-		// 				Entries: []packit.BuildpackPlanEntry{
-		// 					{
-		// 						Name: "source-removal",
-		// 						Metadata: map[string]interface{}{
-		// 							"keep": 3,
-		// 						},
-		// 					},
-		// 				},
-		// 			},
-		// 			Layers: packit.Layers{Path: layersDir},
-		// 		})
-		// 		Expect(err).To(MatchError("Error: keep field needs to be a list of strings"))
-		// 	})
-		// })
 
-		// context("when there is a malformed glob in keep", func() {
-		// 	it("returns an error", func() {
-		// 		_, err := build(packit.BuildContext{
-		// 			CNBPath:    cnbDir,
-		// 			Stack:      "some-stack",
-		// 			WorkingDir: workingDir,
-		// 			Plan: packit.BuildpackPlan{
-		// 				Entries: []packit.BuildpackPlanEntry{
-		// 					{
-		// 						Name: "source-removal",
-		// 						Metadata: map[string]interface{}{
-		// 							"keep": []interface{}{`\`},
-		// 						},
-		// 					},
-		// 				},
-		// 			},
-		// 			Layers: packit.Layers{Path: layersDir},
-		// 		})
-		// 		Expect(err).To(MatchError(ContainSubstring("syntax error in pattern")))
-		// 	})
-		// })
+		it.Before(func() {
+			Expect(os.Setenv("BP_INCLUDE_FILES", `\`)).To(Succeed())
+		})
 
-		// context("when the directory cannot be removed", func() {
-		// 	it.Before(func() {
-		// 		Expect(os.Chmod(workingDir, 0666)).To(Succeed())
-		// 	})
+		it.After(func() {
+			Expect(os.Unsetenv("BP_INCLUDE_FILES")).To(Succeed())
+		})
 
-		// 	it.After(func() {
-		// 		Expect(os.Chmod(workingDir, os.ModePerm)).To(Succeed())
-		// 	})
+		context("when there is a malformed glob in keep", func() {
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					WorkingDir: workingDir,
+					Plan:       packit.BuildpackPlan{},
+					Layers:     packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("syntax error in pattern")))
+			})
+		})
 
-		// 	it("returns an error", func() {
-		// 		_, err := build(packit.BuildContext{
-		// 			CNBPath:    cnbDir,
-		// 			Stack:      "some-stack",
-		// 			WorkingDir: workingDir,
-		// 			Plan:       packit.BuildpackPlan{},
-		// 			Layers:     packit.Layers{Path: layersDir},
-		// 		})
-		// 		Expect(err).To(MatchError(ContainSubstring("permission denied")))
-		// 	})
-		// })
+		context("when the directory cannot be removed", func() {
+			it.Before(func() {
+				Expect(os.Chmod(workingDir, 0666)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Chmod(workingDir, os.ModePerm)).To(Succeed())
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					WorkingDir: workingDir,
+					Plan:       packit.BuildpackPlan{},
+					Layers:     packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("permission denied")))
+			})
+		})
 	})
 }
