@@ -1,10 +1,10 @@
 package integration_test
 
 import (
-	"fmt"
+	"path/filepath"
 	"testing"
 
-	"github.com/cloudfoundry/dagger"
+	"github.com/paketo-buildpacks/occam"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
@@ -12,27 +12,21 @@ import (
 )
 
 var (
-	buildpack          string
-	buildPlanBuildpack string
+	buildpack string
 )
 
 func TestIntegration(t *testing.T) {
 	var Expect = NewWithT(t).Expect
 
-	bpDir, err := dagger.FindBPRoot()
-	Expect(err).NotTo(HaveOccurred())
-
-	buildpack, err = dagger.PackageBuildpack(bpDir)
+	root, err := filepath.Abs("./..")
 	Expect(err).ToNot(HaveOccurred())
-	buildpack = fmt.Sprintf("%s.tgz", buildpack)
 
-	buildPlanBuildpack, err = dagger.GetLatestCommunityBuildpack("ForestEckhardt", "build-plan")
-	Expect(err).NotTo(HaveOccurred())
+	buildpackStore := occam.NewBuildpackStore()
 
-	defer func() {
-		dagger.DeleteBuildpack(buildpack)
-		dagger.DeleteBuildpack(buildPlanBuildpack)
-	}()
+	buildpack, err = buildpackStore.Get.
+		WithVersion("1.2.3").
+		Execute(root)
+	Expect(err).ToNot(HaveOccurred())
 
 	suite := spec.New("Integration", spec.Parallel(), spec.Report(report.Terminal{}))
 	suite("Default", testDefault)

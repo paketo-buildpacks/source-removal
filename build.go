@@ -1,7 +1,6 @@
 package sourceremoval
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,41 +11,27 @@ import (
 
 func Build() packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
+		var envGlobs []string
+		if val, ok := os.LookupEnv("BP_INCLUDE_FILES"); ok {
+			envGlobs = append(envGlobs, filepath.SplitList(val)...)
+		}
+
+		// The following constructs a set of all the file paths that are required from a
+		// globed file to exist and prepends the working directory onto all of
+		// those permutation
+		//
+		// Example:
+		// Input: "public/data/*"
+		// Output: ["working-dir/public", "working-dir/public/data", "working-dir/public/data/*"]
 		var globs = []string{context.WorkingDir}
-
-		for _, entry := range context.Plan.Entries {
-			existingGlobs, ok := entry.Metadata["keep"]
-			if !ok {
-				continue
-			}
-
-			interfaceGlobs, ok := existingGlobs.([]interface{})
-			if !ok {
-				return packit.BuildResult{}, errors.New("Error: keep field needs to be a list of strings")
-			}
-
-			var rawGlobs []string
-			for _, interfaceGlob := range interfaceGlobs {
-				rawGlob, _ := interfaceGlob.(string)
-				rawGlobs = append(rawGlobs, rawGlob)
-			}
-
-			// The following constructs a set of all the file paths that are required from a
-			// globed file to exist and prepends the working directory onto all of
-			// those permutation
-			//
-			// Example:
-			// Input: "public/data/*"
-			// Output: ["working-dir/public", "working-dir/public/data", "working-dir/public/data/*"]
-			for _, glob := range rawGlobs {
-				dirs := strings.Split(glob, string(os.PathSeparator))
-				for i := range dirs {
-					globs = append(globs, filepath.Join(context.WorkingDir, filepath.Join(dirs[:i+1]...)))
-				}
+		for _, glob := range envGlobs {
+			dirs := strings.Split(glob, string(os.PathSeparator))
+			for i := range dirs {
+				globs = append(globs, filepath.Join(context.WorkingDir, filepath.Join(dirs[:i+1]...)))
 			}
 		}
 
-		removalFunc := func(path string, info os.FileInfo, err error) error {
+		err := filepath.Walk(context.WorkingDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -68,9 +53,8 @@ func Build() packit.BuildFunc {
 			}
 
 			return nil
-		}
+		})
 
-		err := filepath.Walk(context.WorkingDir, removalFunc)
 		if err != nil {
 			return packit.BuildResult{}, err
 		}

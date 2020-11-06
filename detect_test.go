@@ -24,11 +24,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	it("passes detection", func() {
 		result, err := detect(packit.DetectContext{})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(result.Plan).To(Equal(packit.BuildPlan{
-			Provides: []packit.BuildPlanProvision{
-				{Name: "source-removal"},
-			},
-		}))
+		Expect(result).To(Equal(packit.DetectResult{}))
 	})
 
 }

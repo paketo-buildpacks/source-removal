@@ -1,20 +1,16 @@
 # Source Removal Cloud Native Buildpack
 
-This buildpack is meant to be used at the end of the buildpack order definition and will delete files in the application directory.
+This buildpack is meant to be used at the end of the buildpack order definition
+and will delete files in the application directory.
 
 ## Integration
 
-The Source Removal CNB provides source-removal. source-removal can be required by generating a [Build Plan TOML](https://github.com/buildpacks/spec/blob/master/buildpack.md#build-plan-toml) file or a `plan.toml` file that can be used with the [Build Plan CNB](https://github.com/ForestEkhardt/build-plan) that looks like the following:
-
-```toml
-[[requires]]
-  name = "source-removal"
-  [requires.metadata]
-    keep = [
-    'file/glob/*'
-    ]
+This buildpack will always pass detection and will delete all files that are
+not flagged to be included using the environment variable `$BP_INCLUDE_FILES`
+which is a list of paths.
+```shell
+BP_INCLUDE_FILES=file/glob/*
 ```
-
 
 ## Usage
 
