@@ -89,14 +89,7 @@ function buildpack::archive() {
 
   util::print::title "Packaging buildpack into ${BUILD_DIR}/buildpack.tgz..."
 
-  if [[ -f "${ROOT_DIR}/.packit" ]]; then
-    util::tools::jam::install --directory "${BIN_DIR}"
-
-    jam pack \
-      --buildpack "${ROOT_DIR}/buildpack.toml" \
-      --version "${version}" \
-      --output "${BUILD_DIR}/buildpack.tgz"
-  else
+  if [[ -f "${ROOT_DIR}/.libbuildpack" ]]; then
     util::tools::packager::install --directory "${BIN_DIR}"
 
     packager \
@@ -104,6 +97,13 @@ function buildpack::archive() {
       --archive \
       --version "${version}" \
       "${BUILD_DIR}/buildpack"
+  else
+    util::tools::jam::install --directory "${BIN_DIR}"
+
+    jam pack \
+      --buildpack "${ROOT_DIR}/buildpack.toml" \
+      --version "${version}" \
+      --output "${BUILD_DIR}/buildpack.tgz"
   fi
 }
 
@@ -116,8 +116,8 @@ function buildpackage::create() {
   util::tools::pack::install --directory "${BIN_DIR}"
 
   pack \
-    package-buildpack "${output}" \
-      --config "${ROOT_DIR}/package.toml" \
+    buildpack package "${output}" \
+      --path "${BUILD_DIR}/buildpack.tgz" \
       --format file
 }
 
