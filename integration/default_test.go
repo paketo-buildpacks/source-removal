@@ -52,7 +52,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 					Execute(name, filepath.Join("testdata", "remove_source"))
 				Expect(err).NotTo(HaveOccurred())
 
-				container, err = docker.Container.Run.WithCommand(`echo "hello world" && ls -a /workspace`).Execute(image.ID)
+				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(func() string {
@@ -76,7 +76,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 					Execute(name, filepath.Join("testdata", "perserve_source"))
 				Expect(err).NotTo(HaveOccurred())
 
-				container, err = docker.Container.Run.WithCommand(`echo "hello world" && ls -a /workspace`).Execute(image.ID)
+				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(func() string {
