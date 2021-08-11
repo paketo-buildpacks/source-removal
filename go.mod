@@ -1,18 +1,14 @@
 module github.com/ForestEckhardt/source-removal
 
-go 1.13
+go 1.16
 
 require (
-	cloud.google.com/go v0.71.0 // indirect
-	github.com/cloudfoundry/dagger v0.0.0-20201020163315-0689eede41e6
-	github.com/fatih/color v1.10.0 // indirect
-	github.com/mitchellh/mapstructure v1.3.3 // indirect
-	github.com/onsi/gomega v1.10.3
-	github.com/paketo-buildpacks/occam v0.0.20
-	github.com/paketo-buildpacks/packit v0.3.1
+	github.com/BurntSushi/toml v0.4.1 // indirect
+	github.com/onsi/gomega v1.15.0
+	github.com/paketo-buildpacks/occam v0.1.4
+	github.com/paketo-buildpacks/packit v0.14.3
 	github.com/sclevine/spec v1.4.0
-	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102 // indirect
-	golang.org/x/sys v0.0.0-20201106081118-db71ae66460a // indirect
-	golang.org/x/text v0.3.4 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
+	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
+	golang.org/x/text v0.3.7 // indirect
 )

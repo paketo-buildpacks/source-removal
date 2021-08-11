@@ -18,6 +18,11 @@ source "${PROGDIR}/.util/git.sh"
 function main() {
   while [[ "${#}" != 0 ]]; do
     case "${1}" in
+      --use-token|-t)
+        shift 1
+        token::fetch
+        ;;
+
       --help|-h)
         shift 1
         usage
@@ -40,7 +45,6 @@ function main() {
 
   tools::install
   images::pull
-  token::fetch
   tests::run
 }
 
@@ -51,7 +55,8 @@ integration.sh [OPTIONS]
 Runs the integration test suite.
 
 OPTIONS
-  --help  -h  prints the command usage
+  --help       -h  prints the command usage
+  --use-token  -t  use GIT_TOKEN from lastpass
 USAGE
 }
 
@@ -59,11 +64,10 @@ function tools::install() {
   util::tools::pack::install \
     --directory "${BUILDPACKDIR}/.bin"
 
-  if [[ -f "${BUILDPACKDIR}/.packit" ]]; then
-    util::tools::jam::install \
-      --directory "${BUILDPACKDIR}/.bin"
+  util::tools::jam::install \
+    --directory "${BUILDPACKDIR}/.bin"
 
-  else
+  if [[ -f "${BUILDPACKDIR}/.libbuildpack" ]]; then
     util::tools::packager::install \
       --directory "${BUILDPACKDIR}/.bin"
   fi
@@ -85,18 +89,16 @@ function images::pull() {
   docker pull "${builder}"
 
   util::print::title "Setting default pack builder image..."
-  pack set-default-builder "${builder}"
+  pack config default-builder "${builder}"
 
   local run_image lifecycle_image
   run_image="$(
-    docker inspect "${builder}" \
-      | jq -r '.[0].Config.Labels."io.buildpacks.builder.metadata"' \
-      | jq -r '.stack.runImage.image'
+    pack inspect-builder "${builder}" --output json \
+      | jq -r '.remote_info.run_images[0].name'
   )"
   lifecycle_image="index.docker.io/buildpacksio/lifecycle:$(
-    docker inspect "${builder}" \
-      | jq -r '.[0].Config.Labels."io.buildpacks.builder.metadata"' \
-      | jq -r '.lifecycle.version'
+    pack inspect-builder "${builder}" --output json \
+      | jq -r '.remote_info.lifecycle.version'
   )"
 
   util::print::title "Pulling run image..."

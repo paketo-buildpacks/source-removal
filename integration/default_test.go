@@ -52,13 +52,13 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 					Execute(name, filepath.Join("testdata", "remove_source"))
 				Expect(err).NotTo(HaveOccurred())
 
-				container, err = docker.Container.Run.WithCommand(`echo "hello world" && ls -a /workspace`).Execute(image.ID)
+				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(func() string {
 					logs, _ := docker.Container.Logs.Execute(container.ID)
 					return logs.String()
-				}, "5s").Should(ContainSubstring("hello world"))
+				}, "10s").Should(ContainSubstring("hello world"))
 
 				logs, err := docker.Container.Logs.Execute(container.ID)
 				Expect(err).NotTo(HaveOccurred())
@@ -76,13 +76,13 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 					Execute(name, filepath.Join("testdata", "perserve_source"))
 				Expect(err).NotTo(HaveOccurred())
 
-				container, err = docker.Container.Run.WithCommand(`echo "hello world" && ls -a /workspace`).Execute(image.ID)
+				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(func() string {
 					logs, _ := docker.Container.Logs.Execute(container.ID)
 					return logs.String()
-				}, "5s").Should(ContainSubstring("hello world"))
+				}, "10s").Should(ContainSubstring("hello world"))
 
 				logs, err := docker.Container.Logs.Execute(container.ID)
 				Expect(err).NotTo(HaveOccurred())
