@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -29,12 +30,16 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			image     occam.Image
 			container occam.Container
 
-			name string
+			name   string
+			source string
 		)
 
 		it.Before(func() {
 			var err error
 			name, err = occam.RandomName()
+			Expect(err).NotTo(HaveOccurred())
+
+			source, err = occam.Source(filepath.Join("testdata", "default"))
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -42,6 +47,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
 			Expect(docker.Image.Remove.Execute(image.ID)).To(Succeed())
 			Expect(docker.Volume.Remove.Execute(occam.CacheVolumeNames(name))).To(Succeed())
+			Expect(os.RemoveAll(source)).To(Succeed())
 		})
 
 		context("when you want everything in source to be removed", func() {
@@ -49,7 +55,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 				var err error
 				image, _, err = pack.Build.
 					WithBuildpacks(buildpack).
-					Execute(name, filepath.Join("testdata", "remove_source"))
+					Execute(name, source)
 				Expect(err).NotTo(HaveOccurred())
 
 				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
@@ -68,12 +74,17 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
-		context("when you want to perserve something in source", func() {
-			it("builds a working OCI image for an app that has the files which were supposed to be perserved", func() {
+		context("when you want to include something in source", func() {
+			it("builds a working OCI image for an app that contains the files which were supposed to be included", func() {
+				// The .occam-key needs to be include in order to ensure that a unique
+				// image is made to make the test thread safe
 				var err error
 				image, _, err = pack.Build.
+					WithEnv(map[string]string{
+						"BP_INCLUDE_FILES": "some-file:.occam-key",
+					}).
 					WithBuildpacks(buildpack).
-					Execute(name, filepath.Join("testdata", "perserve_source"))
+					Execute(name, source)
 				Expect(err).NotTo(HaveOccurred())
 
 				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
@@ -88,6 +99,33 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(logs.String()).To(ContainSubstring("some-file"))
 				Expect(logs.String()).NotTo(ContainSubstring("other-file"))
+				Expect(logs.String()).To(ContainSubstring(".."))
+			})
+		})
+
+		context("when you want to exclude something in source", func() {
+			it("builds a working OCI image for an app that does not contain the files which were supposed to be exclude", func() {
+				var err error
+				image, _, err = pack.Build.
+					WithEnv(map[string]string{
+						"BP_EXCLUDE_FILES": "some-file",
+					}).
+					WithBuildpacks(buildpack).
+					Execute(name, source)
+				Expect(err).NotTo(HaveOccurred())
+
+				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					logs, _ := docker.Container.Logs.Execute(container.ID)
+					return logs.String()
+				}, "10s").Should(ContainSubstring("hello world"))
+
+				logs, err := docker.Container.Logs.Execute(container.ID)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(logs.String()).NotTo(ContainSubstring("some-file"))
+				Expect(logs.String()).To(ContainSubstring("other-file"))
 				Expect(logs.String()).To(ContainSubstring(".."))
 			})
 		})

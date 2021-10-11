@@ -50,7 +50,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	context("when there are no files to keep", func() {
+	context("when there are no files to keep or exclude", func() {
 		it("returns a result that deletes the contents of the working directroy", func() {
 			result, err := build(packit.BuildContext{
 				CNBPath:    cnbDir,
@@ -97,17 +97,89 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("failure cases", func() {
-
+	context("when there are files to exclude", func() {
 		it.Before(func() {
-			Expect(os.Setenv("BP_INCLUDE_FILES", `\`)).To(Succeed())
+			Expect(os.Setenv("BP_EXCLUDE_FILES", `some-dir/some-other-dir/*:some-file`)).To(Succeed())
 		})
 
 		it.After(func() {
-			Expect(os.Unsetenv("BP_INCLUDE_FILES")).To(Succeed())
+			Expect(os.Unsetenv("BP_EXCLUDE_FILES")).To(Succeed())
 		})
 
-		context("when there is a malformed glob in keep", func() {
+		it("returns a result that deletes the contents of the working directroy that were specified", func() {
+			result, err := build(packit.BuildContext{
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				WorkingDir: workingDir,
+				Plan:       packit.BuildpackPlan{},
+				Layers:     packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal(packit.BuildResult{}))
+
+			Expect(workingDir).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-file")).NotTo(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir")).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-dir", "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file")).NotTo(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file")).NotTo(BeAnExistingFile())
+		})
+	})
+
+	context("failure cases", func() {
+		context("when both BP_INCLUDE_FILES and BP_EXCLUDE_FILES are set", func() {
+			it.Before(func() {
+				Expect(os.Setenv("BP_INCLUDE_FILES", `some-file`)).To(Succeed())
+				Expect(os.Setenv("BP_EXCLUDE_FILES", `some-file`)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("BP_INCLUDE_FILES")).To(Succeed())
+				Expect(os.Unsetenv("BP_EXCLUDE_FILES")).To(Succeed())
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					WorkingDir: workingDir,
+					Plan:       packit.BuildpackPlan{},
+					Layers:     packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("BP_INCLUDE_FILES and BP_EXCLUDE_FILES cannot be set at the same time")))
+			})
+		})
+
+		context("when there is a malformed glob in include", func() {
+			it.Before(func() {
+				Expect(os.Setenv("BP_INCLUDE_FILES", `\`)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("BP_INCLUDE_FILES")).To(Succeed())
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					WorkingDir: workingDir,
+					Plan:       packit.BuildpackPlan{},
+					Layers:     packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("syntax error in pattern")))
+			})
+		})
+
+		context("when there is a malformed glob in exclude", func() {
+			it.Before(func() {
+				Expect(os.Setenv("BP_EXCLUDE_FILES", `\`)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("BP_EXCLUDE_FILES")).To(Succeed())
+			})
+
 			it("returns an error", func() {
 				_, err := build(packit.BuildContext{
 					CNBPath:    cnbDir,
@@ -122,7 +194,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		context("when the directory cannot be removed", func() {
 			it.Before(func() {
-				Expect(os.Chmod(workingDir, 0666)).To(Succeed())
+				Expect(os.Chmod(workingDir, 0000)).To(Succeed())
 			})
 
 			it.After(func() {
