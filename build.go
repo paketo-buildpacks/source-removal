@@ -19,32 +19,69 @@ func Build() packit.BuildFunc {
 			return packit.BuildResult{}, errors.New("BP_INCLUDE_FILES and BP_EXCLUDE_FILES cannot be set at the same time")
 		}
 
+		var globs []string
 		switch {
 		case includeSet:
-			err := includeFiles(includeVal, context.WorkingDir)
-			if err != nil {
-				return packit.BuildResult{}, err
-			}
+			globs = includeFiles(includeVal, context.WorkingDir)
 		case excludeSet:
-			err := excludeFiles(excludeVal, context.WorkingDir)
-			if err != nil {
-				return packit.BuildResult{}, err
-			}
+			globs = excludeFiles(excludeVal, context.WorkingDir)
 		default:
 			err := removeAllFiles(context.WorkingDir)
+			return packit.BuildResult{}, err
+		}
+
+		err := filepath.Walk(context.WorkingDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				return packit.BuildResult{}, err
+				return err
 			}
+
+			match, glob, err := matchingGlob(path, globs)
+			if err != nil {
+				return err
+			}
+
+			if match && includeSet {
+				// filepath.SkipDir is returned here because this is a glob that
+				// specifies everything in a directroy. If we get a match on such
+				// a glob we want to ignore all other files in that directory because
+				// they are files we want to keep and the glob will not work
+				// if it enters that directory any further.
+				//
+				// Example:
+				// "public/data/*" matches "public/data/file" but does not
+				// match "public/data/directory/file" we obviously want that directory
+				// to remain so we use filepath.SkipDir when we detect
+				// "public/data/file" and the glob ends in "/*" which skips scanning
+				// "public/data" directory because we know we want all of the contents
+				// and don't want to go any deeper.
+				if strings.HasSuffix(glob, fmt.Sprintf("%c*", os.PathSeparator)) {
+					return filepath.SkipDir
+				}
+			}
+
+			if (match && excludeSet) || (!match && includeSet) {
+				err := os.RemoveAll(path)
+				if err != nil {
+					return err
+				}
+
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return packit.BuildResult{}, err
 		}
 
 		return packit.BuildResult{}, nil
 	}
 }
 
-func includeFiles(includeVal, workingDir string) error {
-	var envGlobs []string
-	envGlobs = append(envGlobs, filepath.SplitList(includeVal)...)
-
+func includeFiles(includeVal, workingDir string) []string {
 	// The following constructs a set of all the file paths that are required from a
 	// globed file to exist and prepends the working directory onto all of
 	// those permutation
@@ -53,68 +90,24 @@ func includeFiles(includeVal, workingDir string) error {
 	// Input: "public/data/*"
 	// Output: ["working-dir/public", "working-dir/public/data", "working-dir/public/data/*"]
 	var globs = []string{workingDir}
-	for _, glob := range envGlobs {
+	for _, glob := range filepath.SplitList(includeVal) {
 		dirs := strings.Split(glob, string(os.PathSeparator))
 		for i := range dirs {
 			globs = append(globs, filepath.Join(workingDir, filepath.Join(dirs[:i+1]...)))
 		}
 	}
 
-	return filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	return globs
 
-		match, err := matchingGlob(path, globs, true)
-		if err != nil {
-			return err
-		}
-
-		if !match {
-			err := os.RemoveAll(path)
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return filepath.SkipDir
-			}
-		}
-
-		return nil
-	})
 }
 
-func excludeFiles(excludeVal, workingDir string) error {
+func excludeFiles(excludeVal, workingDir string) []string {
 	var globs []string
 	for _, g := range filepath.SplitList(excludeVal) {
 		globs = append(globs, filepath.Join(workingDir, g))
 	}
 
-	return filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		match, err := matchingGlob(path, globs, false)
-		if err != nil {
-			return err
-		}
-
-		if match {
-			err := os.RemoveAll(path)
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return filepath.SkipDir
-			}
-		}
-
-		return nil
-	})
-
+	return globs
 }
 
 func removeAllFiles(workingDir string) error {
@@ -133,27 +126,17 @@ func removeAllFiles(workingDir string) error {
 	return nil
 }
 
-func matchingGlob(path string, globs []string, includeSet bool) (bool, error) {
+func matchingGlob(path string, globs []string) (bool, string, error) {
 	for _, glob := range globs {
 		match, err := filepath.Match(glob, path)
 		if err != nil {
-			return false, err
+			return false, glob, err
 		}
 
 		if match {
-			if includeSet {
-				// filepath.SkipDir is returned here because this is a glob that
-				// specifies everything in a directroy. If we get a match on such
-				// a glob we want to ignore all other files in that directory because
-				// they are files we want to keep and the glob will not work
-				// if it enters that directory
-				if strings.HasSuffix(glob, fmt.Sprintf("%c*", os.PathSeparator)) {
-					return true, filepath.SkipDir
-				}
-			}
-			return true, nil
+			return true, glob, nil
 		}
 	}
 
-	return false, nil
+	return false, "", nil
 }
