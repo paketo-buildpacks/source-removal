@@ -126,30 +126,38 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("failure cases", func() {
-		context("when both BP_INCLUDE_FILES and BP_EXCLUDE_FILES are set", func() {
-			it.Before(func() {
-				Expect(os.Setenv("BP_INCLUDE_FILES", `some-file`)).To(Succeed())
-				Expect(os.Setenv("BP_EXCLUDE_FILES", `some-file`)).To(Succeed())
-			})
-
-			it.After(func() {
-				Expect(os.Unsetenv("BP_INCLUDE_FILES")).To(Succeed())
-				Expect(os.Unsetenv("BP_EXCLUDE_FILES")).To(Succeed())
-			})
-
-			it("returns an error", func() {
-				_, err := build(packit.BuildContext{
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					WorkingDir: workingDir,
-					Plan:       packit.BuildpackPlan{},
-					Layers:     packit.Layers{Path: layersDir},
-				})
-				Expect(err).To(MatchError(ContainSubstring("BP_INCLUDE_FILES and BP_EXCLUDE_FILES cannot be set at the same time")))
-			})
+	context("when both BP_INCLUDE_FILES and BP_EXCLUDE_FILES are set", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_INCLUDE_FILES", `some-dir/*:some-file`)).To(Succeed())
+			Expect(os.Setenv("BP_EXCLUDE_FILES", `some-file`)).To(Succeed())
 		})
 
+		it.After(func() {
+			Expect(os.Unsetenv("BP_INCLUDE_FILES")).To(Succeed())
+			Expect(os.Unsetenv("BP_EXCLUDE_FILES")).To(Succeed())
+		})
+
+		it("runs include logic followed by exclude logic", func() {
+			result, err := build(packit.BuildContext{
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				WorkingDir: workingDir,
+				Plan:       packit.BuildpackPlan{},
+				Layers:     packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal(packit.BuildResult{}))
+
+			Expect(workingDir).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-file")).NotTo(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir")).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-dir", "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file")).To(BeAnExistingFile())
+		})
+	})
+
+	context("failure cases", func() {
 		context("when there is a malformed glob in include", func() {
 			it.Before(func() {
 				Expect(os.Setenv("BP_INCLUDE_FILES", `\`)).To(Succeed())

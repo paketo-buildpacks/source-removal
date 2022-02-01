@@ -25,6 +25,9 @@ directory flag them to be included using the environment variable
 $BP_EXCLUDE_FILES=file/glob/*:file/some-file
 ```
 
+### Overlapping logic
+If both are set then the include logic will run followed by the exclude logic.
+
 ## Usage
 
 To package this buildpack for consumption:
