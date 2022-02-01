@@ -129,5 +129,33 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 				Expect(logs.String()).To(ContainSubstring(".."))
 			})
 		})
+
+		context("when both include and exclude are set", func() {
+			it("builds a working OCI image for an app that include logic is applied first followed by exclude logic", func() {
+				var err error
+				image, _, err = pack.Build.
+					WithEnv(map[string]string{
+						"BP_INCLUDE_FILES": "some-file:.occam-key:other-file",
+						"BP_EXCLUDE_FILES": "some-file",
+					}).
+					WithBuildpacks(buildpack).
+					Execute(name, source)
+				Expect(err).NotTo(HaveOccurred())
+
+				container, err = docker.Container.Run.WithCommand(`ls -a /workspace && echo "hello world"`).Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					logs, _ := docker.Container.Logs.Execute(container.ID)
+					return logs.String()
+				}, "10s").Should(ContainSubstring("hello world"))
+
+				logs, err := docker.Container.Logs.Execute(container.ID)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(logs.String()).NotTo(ContainSubstring("some-file"))
+				Expect(logs.String()).To(ContainSubstring("other-file"))
+				Expect(logs.String()).To(ContainSubstring(".."))
+			})
+		})
 	})
 }
