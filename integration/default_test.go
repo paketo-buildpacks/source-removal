@@ -51,7 +51,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("when you want everything in source to be removed", func() {
-			it("builds a working OCI image for an app that has an empty working dir", func() {
+			it("builds a working OCI image for an app that has an intacted working dir", func() {
 				var err error
 				image, _, err = pack.Build.
 					WithBuildpacks(buildpack).
@@ -68,8 +68,8 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 
 				logs, err := docker.Container.Logs.Execute(container.ID)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(logs.String()).NotTo(ContainSubstring("some-file"))
-				Expect(logs.String()).NotTo(ContainSubstring("other-file"))
+				Expect(logs.String()).To(ContainSubstring("some-file"))
+				Expect(logs.String()).To(ContainSubstring("other-file"))
 				Expect(logs.String()).To(ContainSubstring(".."))
 			})
 		})
