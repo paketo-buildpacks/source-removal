@@ -1,7 +1,6 @@
 package sourceremoval_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,20 +25,20 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		layersDir, err = ioutil.TempDir("", "layers")
+		layersDir, err = os.MkdirTemp("", "layers")
 		Expect(err).NotTo(HaveOccurred())
 
-		cnbDir, err = ioutil.TempDir("", "cnb")
+		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
-		workingDir, err = ioutil.TempDir("", "working-dir")
+		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(workingDir, "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
 		Expect(os.MkdirAll(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir"), os.ModePerm)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(workingDir, "some-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file"), []byte(`some-contents`), os.ModePerm)).To(Succeed())
 
 		build = sourceremoval.Build()
 	})
@@ -51,7 +50,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("when there are no files to keep or exclude", func() {
-		it("returns a result that deletes the contents of the working directroy", func() {
+		it("returns a result that keeps the contents of the working directroy", func() {
 			result, err := build(packit.BuildContext{
 				CNBPath:    cnbDir,
 				Stack:      "some-stack",
@@ -63,8 +62,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(result).To(Equal(packit.BuildResult{}))
 
 			Expect(workingDir).To(BeADirectory())
-			Expect(filepath.Join(workingDir, "some-file")).ToNot(BeAnExistingFile())
-			Expect(filepath.Join(workingDir, "some-dir")).ToNot(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir")).To(BeADirectory())
+			Expect(filepath.Join(workingDir, "some-dir", "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "some-file")).To(BeAnExistingFile())
+			Expect(filepath.Join(workingDir, "some-dir", "some-other-dir", "another-dir", "some-file")).To(BeAnExistingFile())
 		})
 	})
 
@@ -197,27 +199,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Layers:     packit.Layers{Path: layersDir},
 				})
 				Expect(err).To(MatchError(ContainSubstring("syntax error in pattern")))
-			})
-		})
-
-		context("when the directory cannot be removed", func() {
-			it.Before(func() {
-				Expect(os.Chmod(workingDir, 0000)).To(Succeed())
-			})
-
-			it.After(func() {
-				Expect(os.Chmod(workingDir, os.ModePerm)).To(Succeed())
-			})
-
-			it("returns an error", func() {
-				_, err := build(packit.BuildContext{
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					WorkingDir: workingDir,
-					Plan:       packit.BuildpackPlan{},
-					Layers:     packit.Layers{Path: layersDir},
-				})
-				Expect(err).To(MatchError(ContainSubstring("permission denied")))
 			})
 		})
 	})
