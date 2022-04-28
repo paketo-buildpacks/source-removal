@@ -1,8 +1,8 @@
-api = "0.5"
+api = "0.7"
 
 [buildpack]
-id = "ForestEckhardt/source-removal"
-name = "Source Removal Buildpack"
+id = "paketo-buildpacks/source-removal"
+name = "Paekto Source Removal Buildpack"
 
 [metadata]
 include-files = ["bin/run", "bin/build","bin/detect","buildpack.toml"]
