@@ -1,8 +1,8 @@
 package main
 
 import (
-	sourceremoval "github.com/ForestEckhardt/source-removal"
 	"github.com/paketo-buildpacks/packit/v2"
+	sourceremoval "github.com/paketo-buildpacks/source-removal"
 )
 
 func main() {

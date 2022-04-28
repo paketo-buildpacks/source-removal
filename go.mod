@@ -1,4 +1,4 @@
-module github.com/ForestEckhardt/source-removal
+module github.com/paketo-buildpacks/source-removal
 
 go 1.16
 

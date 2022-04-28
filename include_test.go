@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	sourceremoval "github.com/ForestEckhardt/source-removal"
+	sourceremoval "github.com/paketo-buildpacks/source-removal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
