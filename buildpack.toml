@@ -2,7 +2,7 @@ api = "0.7"
 
 [buildpack]
 id = "paketo-buildpacks/source-removal"
-name = "Paekto Source Removal Buildpack"
+name = "Paketo Source Removal Buildpack"
 
 [metadata]
 include-files = ["bin/run", "bin/build","bin/detect","buildpack.toml"]
