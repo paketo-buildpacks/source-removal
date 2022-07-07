@@ -39,3 +39,13 @@ $ ./scripts/package.sh
 
 This builds the buildpack's Go source using `GOOS=linux` by default. You can
 supply another value as the first argument to `package.sh`.
+
+## Library Usage
+
+The logic to implement this buildpack is isolated to a package called `logic`, which can be used if you want to incorporate the same logic in  your buildpack or library. This package does reference packit or libcnb/libpak so it can be used from either style buildpack.
+
+```
+import "github.com/paketo-buildpacks/source-removal/logic"
+```
+
+Then you can run `logic.Exclude("foo/*")` or `logic.Include("foo/*")`.

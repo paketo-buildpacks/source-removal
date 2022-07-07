@@ -1,4 +1,4 @@
-package sourceremoval
+package logic
 
 import (
 	"fmt"
