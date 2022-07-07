@@ -1,11 +1,11 @@
-package sourceremoval_test
+package logic_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	sourceremoval "github.com/paketo-buildpacks/source-removal"
+	"github.com/paketo-buildpacks/source-removal/logic"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -44,7 +44,7 @@ func testExclude(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("returns a result that deletes the contents of the working directroy that were specified", func() {
-			err := sourceremoval.Exclude(workingDir, "some-dir/some-other-dir/*:some-file")
+			err := logic.Exclude(workingDir, "some-dir/some-other-dir/*:some-file")
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(workingDir).To(BeADirectory())
@@ -67,14 +67,14 @@ func testExclude(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("returns an error", func() {
-				err := sourceremoval.Exclude(workingDir, "some-dir/some-other-dir/*:some-file")
+				err := logic.Exclude(workingDir, "some-dir/some-other-dir/*:some-file")
 				Expect(err).To(MatchError(ContainSubstring("permission denied")))
 			})
 		})
 
 		context("when there is a malformed glob in include", func() {
 			it("returns an error", func() {
-				err := sourceremoval.Exclude(workingDir, `\`)
+				err := logic.Exclude(workingDir, `\`)
 				Expect(err).To(MatchError(ContainSubstring("syntax error in pattern")))
 			})
 		})
