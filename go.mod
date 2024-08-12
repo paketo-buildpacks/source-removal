@@ -5,7 +5,7 @@ go 1.22.6
 require (
 	github.com/onsi/gomega v1.34.1
 	github.com/paketo-buildpacks/occam v0.18.7
-	github.com/paketo-buildpacks/packit/v2 v2.14.1
+	github.com/paketo-buildpacks/packit/v2 v2.14.2
 	github.com/sclevine/spec v1.4.0
 )
 
