@@ -5,7 +5,7 @@ go 1.24.6
 require (
 	github.com/onsi/gomega v1.38.2
 	github.com/paketo-buildpacks/occam v0.30.0
-	github.com/paketo-buildpacks/packit/v2 v2.24.0
+	github.com/paketo-buildpacks/packit/v2 v2.25.0
 	github.com/sclevine/spec v1.4.0
 )
 
@@ -77,7 +77,7 @@ require (
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
-	google.golang.org/grpc v1.75.0 // indirect
+	google.golang.org/grpc v1.75.1 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
