@@ -1,6 +1,6 @@
 module github.com/paketo-buildpacks/source-removal
 
-go 1.26.6
+go 1.27.0
 
 require (
 	github.com/onsi/gomega v1.41.0
