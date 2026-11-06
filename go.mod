@@ -1,11 +1,11 @@
 module github.com/paketo-buildpacks/source-removal
 
-go 1.26.8
+go 1.27.3
 
 require (
 	github.com/onsi/gomega v1.44.0
 	github.com/paketo-buildpacks/occam v0.31.4
-	github.com/paketo-buildpacks/packit/v2 v2.25.8
+	github.com/paketo-buildpacks/packit/v2 v2.26.0
 	github.com/sclevine/spec v1.4.0
 )
 
